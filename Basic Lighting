@@ -1,0 +1,107 @@
+Colour RayTracer::CalculateLighting(std::vector<Light*>* lights, Vector3* campos, RayHitResult* hitresult)
+{
+	Colour outcolour;
+	std::vector<Light*>::iterator lit_iter = lights->begin();
+
+	//Create the Colours 
+	Colour diffuseColour;
+	Colour specularolour;
+	Colour ambientColour;
+	Colour lightColour;
+
+ 
+	Primitive* prim = (Primitive*)hitresult->data;
+	Material* mat = prim->GetMaterial();
+
+	// get value for diffuse and specular
+	diffuseColour = mat->GetDiffuseColour();
+	specularolour = mat->GetSpecularColour();
+	ambientColour = mat->GetAmbientColour();
+
+	//Create the Vectors
+	Vector3 hitPos = hitresult->point;
+	Vector3 lightPosition;
+	//Light vector
+	Vector3 l;
+	
+	// for loop for all lights
+	for (; lit_iter != lights->end(); ++lit_iter) 
+	{
+		//Get the colour of the light
+		lightColour = (*lit_iter)->GetLightColour(); 
+		//Get the position of the light
+		lightPosition = (*lit_iter)->GetLightPosition();
+		//Set the Light vector
+		l = lightPosition - hitPos; 
+		//Normalise the light vecotr
+		l.Normalise();
+	}
+	//Set the view vector
+	Vector3 e = *campos - hitPos;
+	//Set the half vector
+	Vector3 h = (l + e).Normalise();
+
+	//Generate the grid pattern on the plane
+	if (((Primitive*)hitresult->data)->m_primtype == Primitive::PRIMTYPE_Plane)
+	{
+		Vector3 intersection = hitresult->point;
+
+		int dx = (int)(fabsf(intersection[0]*0.5f)+0.5f);
+		int dy = (int)(fabsf(intersection[1]*0.5f)+0.5f);
+		int dz = (int)(fabsf(intersection[2]*0.5f)+0.5f);
+
+		//If the intersection point is inside an "even" cell
+		//Set the return colour to light grey [0.1,0.1,0.1]
+		//Otherwise set the return outcolour to what material's diffuse colour.
+		if (dx % 2 || dy % 2 || dz % 2 )
+		{
+			outcolour = Vector3(0.1f, 0.1f, 0.1f);
+		}
+		else
+		{
+			outcolour = mat->GetDiffuseColour();
+		}
+		return outcolour;
+	}
+
+	////Go through all lights in the scene
+	////Note the default scene only has one light source
+	if (m_traceflag & TRACE_DIFFUSE_AND_SPEC)
+	{
+		//TODO: Calculate and apply the lighting of the intersected object using the illumination model covered in the lecture
+		//i.e. diffuse using Lambertian model, for specular, you can use either Phong or Blinn-Phong model
+
+		//Deffuse colour to be outputted
+		Colour DiffuseColourOut;
+		//Specular colour to be outputted
+		Colour SpecularColourOut;
+		//Ambient colour to be outputted
+		Colour AmbientColourOut; 
+		//Gets the normal
+		Vector3 normal = hitresult->normal;
+
+		//Sets the cosine for Diffuse
+		float cosDiffuse;
+		//Sets the cosine for specular
+		double cosSpecular;
+
+		//Finds the dot poruct of the normal and light vector
+		cosDiffuse = normal.DotProduct(l); 
+		//Finds the dot product of the normal and half vector
+		cosSpecular = normal.DotProduct(h); 
+		//Cosine for specular colour to the power of 5 set the intensity.
+		cosSpecular = pow(cosSpecular, (mat->GetSpecPower() * 5));
+
+		//Sets the diffuse output colour
+		DiffuseColourOut = diffuseColour * lightColour * cosDiffuse;
+		//Sets the Specular output colour
+		SpecularColourOut = specularolour * lightColour * cosSpecular;
+		//Sets the ambient output colour
+		AmbientColourOut = ambientColour * lightColour;
+
+		//Final colour output is the sum between diffuse and specular and ambient
+		outcolour = AmbientColourOut + DiffuseColourOut + SpecularColourOut; 
+	}
+
+	return outcolour;
+}
