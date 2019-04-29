@@ -1,0 +1,21 @@
+if (m_traceflag & TRACE_REFLECTION)
+		{
+			if (((Primitive*)result.data)->m_primtype == Primitive::PRIMTYPE_Sphere ||
+				((Primitive*)result.data)->m_primtype == Primitive::PRIMTYPE_Box)
+			{
+				//TODO: Adventurous Requirement
+				//Trace the reflection on Spheres and Boxes
+				
+				//Create the reflection vector
+				Vector3 vecReflection = ray.GetRay().Reflect(result.normal.Normalise());
+
+				//Create a ray that goes from just before the hit point along the reflection vector
+				Ray reflect;
+				reflect.SetRay(result.point + vecReflection * 0.0001, vecReflection);
+				//Trace the scene again to find the colour of the reflect ray and also mix with the hit objects colour
+				Colour reflectColour = TraceScene(pScene, reflect, outcolour, tracelevel) *  (diffuseColour + outcolour);
+				//Set the output colour for the reflection
+				outcolour = reflectColour + outcolour;
+				
+			}
+		}
