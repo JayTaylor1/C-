@@ -1,0 +1,23 @@
+if (m_traceflag & TRACE_REFRACTION)
+		{
+			if (((Primitive*)result.data)->m_primtype == Primitive::PRIMTYPE_Sphere ||
+				((Primitive*)result.data)->m_primtype == Primitive::PRIMTYPE_Box)
+			{
+				//TODO: Adventurous Requirement
+				//Trace the refraction on Spheres and Boxes
+
+				//Create the refraction vector
+				Vector3 vecRefraction = ray.GetRay().Refract(result.normal, 1.05);
+				//Create the start position vector
+				Vector3 vecStartPos = result.point + vecRefraction;
+
+				//Create the refraction ray 
+				Ray rayRefraction;
+				//Set the ray
+				rayRefraction.SetRay(vecStartPos, vecRefraction);
+
+				//Set the output colour for the refraction
+				outcolour = outcolour + (TraceScene(pScene, rayRefraction, outcolour, tracelevel - 1, shadowray));
+
+			}
+		}
